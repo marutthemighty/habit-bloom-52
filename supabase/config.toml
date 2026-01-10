@@ -1,0 +1,4 @@
+project_id = "mlyhfzoxtbqaizxyoedj"
+
+[functions.habit-suggestions]
+verify_jwt = false
