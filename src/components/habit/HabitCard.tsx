@@ -1,4 +1,4 @@
-import { Habit } from '@/types/habit';
+import { Habit, LegacyHabit } from '@/types/habit';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -6,7 +6,7 @@ import { Check, Trash2, Pause, Play, Leaf, Anchor } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface HabitCardProps {
-  habit: Habit;
+  habit: Habit | LegacyHabit;
   streak: number;
   isCompleted: boolean;
   isPaused: boolean;
@@ -14,6 +14,13 @@ interface HabitCardProps {
   onToggleActive: () => void;
   onRemove: () => void;
 }
+
+// Helper to check if habit is active (handles both new and legacy formats)
+const isHabitActive = (habit: Habit | LegacyHabit): boolean => {
+  if ('is_active' in habit) return habit.is_active;
+  if ('isActive' in habit) return habit.isActive;
+  return true;
+};
 
 export const HabitCard = ({
   habit,
@@ -25,6 +32,7 @@ export const HabitCard = ({
   onRemove,
 }: HabitCardProps) => {
   const isKeystone = habit.category === 'keystone';
+  const active = isHabitActive(habit);
 
   return (
     <Card
@@ -102,7 +110,7 @@ export const HabitCard = ({
             onClick={onToggleActive}
             className="h-8 w-8 text-muted-foreground hover:text-foreground"
           >
-            {habit.isActive ? (
+            {active ? (
               <Pause className="w-4 h-4" />
             ) : (
               <Play className="w-4 h-4" />

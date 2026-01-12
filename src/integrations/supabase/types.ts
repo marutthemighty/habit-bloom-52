@@ -14,13 +14,179 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      daily_logs: {
+        Row: {
+          created_at: string | null
+          disruption_detected_at: string | null
+          disruption_type: string | null
+          id: string
+          log_date: string
+          mood: number | null
+          notes: string | null
+          recovery_plan: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          disruption_detected_at?: string | null
+          disruption_type?: string | null
+          id?: string
+          log_date: string
+          mood?: number | null
+          notes?: string | null
+          recovery_plan?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          disruption_detected_at?: string | null
+          disruption_type?: string | null
+          id?: string
+          log_date?: string
+          mood?: number | null
+          notes?: string | null
+          recovery_plan?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      disruption_history: {
+        Row: {
+          created_at: string | null
+          disruption_type: string
+          ended_at: string | null
+          id: string
+          paused_habits: string[] | null
+          recovery_plan: string | null
+          started_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          disruption_type: string
+          ended_at?: string | null
+          id?: string
+          paused_habits?: string[] | null
+          recovery_plan?: string | null
+          started_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          disruption_type?: string
+          ended_at?: string | null
+          id?: string
+          paused_habits?: string[] | null
+          recovery_plan?: string | null
+          started_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      habit_completions: {
+        Row: {
+          completed: boolean | null
+          completed_date: string
+          created_at: string | null
+          habit_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean | null
+          completed_date: string
+          created_at?: string | null
+          habit_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          completed?: boolean | null
+          completed_date?: string
+          created_at?: string | null
+          habit_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "habit_completions_habit_id_fkey"
+            columns: ["habit_id"]
+            isOneToOne: false
+            referencedRelation: "habits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      habits: {
+        Row: {
+          category: string
+          created_at: string | null
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          name: string
+          pause_reason: string | null
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          pause_reason?: string | null
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          pause_reason?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          id: string
+          notification_enabled: boolean | null
+          notification_time: string | null
+          onboarding_completed: boolean | null
+          plant_type: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id: string
+          notification_enabled?: boolean | null
+          notification_time?: string | null
+          onboarding_completed?: boolean | null
+          plant_type?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          notification_enabled?: boolean | null
+          notification_time?: string | null
+          onboarding_completed?: boolean | null
+          plant_type?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      calculate_streak: { Args: { p_habit_id: string }; Returns: number }
     }
     Enums: {
       [_ in never]: never

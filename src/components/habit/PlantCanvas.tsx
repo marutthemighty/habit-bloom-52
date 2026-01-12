@@ -1,9 +1,11 @@
 import { useRef, useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
+import { PlantType } from '@/types/habit';
 
 interface PlantCanvasProps {
-  health: number; // 0-100
+  health: number;
   totalStreak: number;
+  plantType?: PlantType;
 }
 
 type PlantStage = 'seed' | 'sprout' | 'small' | 'medium' | 'flourishing';
@@ -16,18 +18,16 @@ const getPlantStage = (totalStreak: number): PlantStage => {
   return 'flourishing';
 };
 
-const getStageLabel = (stage: PlantStage): string => {
-  const labels: Record<PlantStage, string> = {
-    seed: '🌰 Seed',
-    sprout: '🌱 Sprout',
-    small: '🌿 Growing',
-    medium: '🌳 Thriving',
-    flourishing: '🌲 Flourishing',
+const getStageLabel = (stage: PlantStage, plantType: PlantType): string => {
+  const labels: Record<PlantType, Record<PlantStage, string>> = {
+    flower: { seed: '🌰 Seed', sprout: '🌱 Sprout', small: '🌿 Budding', medium: '🌷 Blooming', flourishing: '🌸 Flourishing' },
+    vegetable: { seed: '🌰 Seed', sprout: '🌱 Sprout', small: '🥬 Growing', medium: '🥕 Maturing', flourishing: '🥗 Harvest Ready' },
+    fruit_tree: { seed: '🌰 Seed', sprout: '🌱 Sapling', small: '🌿 Young Tree', medium: '🌳 Growing', flourishing: '🍎 Fruit Bearing' },
   };
-  return labels[stage];
+  return labels[plantType][stage];
 };
 
-export const PlantCanvas = ({ health, totalStreak }: PlantCanvasProps) => {
+export const PlantCanvas = ({ health, totalStreak, plantType = 'flower' }: PlantCanvasProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [stage, setStage] = useState<PlantStage>('seed');
   const animationRef = useRef<number>();
@@ -79,22 +79,24 @@ export const PlantCanvas = ({ health, totalStreak }: PlantCanvasProps) => {
       ctx.closePath();
       ctx.fill();
 
-      // Pot rim
       ctx.fillStyle = 'hsl(20, 30%, 38%)';
       ctx.fillRect(potX, potY - 8, potWidth, 12);
 
-      // Soil in pot
       ctx.fillStyle = 'hsl(25, 35%, 30%)';
       ctx.beginPath();
       ctx.ellipse(width / 2, potY + 5, potWidth / 2 - 8, 10, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // Calculate wilting effect
       const wiltFactor = Math.max(0, 1 - health / 100);
       const sway = Math.sin(time * 0.002) * 3 * (1 - wiltFactor * 0.5);
       const droopAngle = wiltFactor * 0.3;
 
-      // Healthy color to wilting color
+      // Plant colors based on type
+      let hue = 142;
+      if (plantType === 'flower') hue = 330;
+      else if (plantType === 'vegetable') hue = 30;
+      else if (plantType === 'fruit_tree') hue = 142;
+
       const greenHue = 142 - wiltFactor * 50;
       const greenSat = 50 - wiltFactor * 20;
       const greenLight = 40 + wiltFactor * 15;
@@ -108,14 +110,13 @@ export const PlantCanvas = ({ health, totalStreak }: PlantCanvasProps) => {
       ctx.translate(centerX, baseY);
       ctx.rotate(droopAngle * Math.sin(time * 0.001));
 
+      // Draw based on stage and plant type
       if (stage === 'seed') {
-        // Just a small mound
         ctx.fillStyle = 'hsl(25, 35%, 28%)';
         ctx.beginPath();
         ctx.ellipse(0, -5, 12, 6, 0, 0, Math.PI * 2);
         ctx.fill();
       } else if (stage === 'sprout') {
-        // Small sprout
         ctx.strokeStyle = plantColor;
         ctx.lineWidth = 3;
         ctx.lineCap = 'round';
@@ -124,122 +125,79 @@ export const PlantCanvas = ({ health, totalStreak }: PlantCanvasProps) => {
         ctx.quadraticCurveTo(sway, -15, sway * 0.5, -30);
         ctx.stroke();
 
-        // Two small leaves
         ctx.fillStyle = plantColor;
         drawLeaf(ctx, sway * 0.5, -25, 12, 8, 0.3 + sway * 0.02);
         drawLeaf(ctx, sway * 0.5, -20, 12, 8, -0.3 + sway * 0.02);
-      } else if (stage === 'small') {
-        // Taller stem
-        ctx.strokeStyle = darkPlantColor;
-        ctx.lineWidth = 4;
-        ctx.lineCap = 'round';
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.quadraticCurveTo(sway * 1.5, -30, sway, -60);
-        ctx.stroke();
-
-        // Multiple leaves
-        ctx.fillStyle = plantColor;
-        drawLeaf(ctx, sway, -55, 18, 12, 0.4 + sway * 0.02);
-        drawLeaf(ctx, sway, -50, 16, 10, -0.4 + sway * 0.02);
-        drawLeaf(ctx, sway * 0.8, -40, 14, 9, 0.5 + sway * 0.02);
-        drawLeaf(ctx, sway * 0.8, -35, 14, 9, -0.5 + sway * 0.02);
-      } else if (stage === 'medium') {
-        // Thicker trunk
-        ctx.strokeStyle = darkPlantColor;
-        ctx.lineWidth = 6;
-        ctx.lineCap = 'round';
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.quadraticCurveTo(sway * 2, -50, sway * 1.5, -100);
-        ctx.stroke();
-
-        // Branches
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(sway * 1.2, -60);
-        ctx.quadraticCurveTo(sway * 2 + 20, -70, sway * 2 + 30, -65);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.moveTo(sway * 1.4, -80);
-        ctx.quadraticCurveTo(sway * 2 - 25, -90, sway * 2 - 35, -85);
-        ctx.stroke();
-
-        // Leaves
-        ctx.fillStyle = plantColor;
-        drawLeaf(ctx, sway * 1.5, -95, 22, 14, 0.3 + sway * 0.015);
-        drawLeaf(ctx, sway * 1.5, -90, 20, 12, -0.3 + sway * 0.015);
-        drawLeaf(ctx, sway * 2 + 30, -65, 18, 11, 0.5);
-        drawLeaf(ctx, sway * 2 - 35, -85, 18, 11, -0.5);
-        drawLeaf(ctx, sway * 1.2, -70, 16, 10, 0.6 + sway * 0.02);
-        drawLeaf(ctx, sway * 1.4, -65, 16, 10, -0.6 + sway * 0.02);
       } else {
-        // Flourishing tree
-        ctx.strokeStyle = 'hsl(25, 30%, 35%)';
-        ctx.lineWidth = 10;
+        // Medium/flourishing - draw based on plant type
+        ctx.strokeStyle = plantType === 'fruit_tree' ? 'hsl(25, 30%, 35%)' : darkPlantColor;
+        ctx.lineWidth = stage === 'flourishing' ? 10 : 6;
         ctx.lineCap = 'round';
         ctx.beginPath();
         ctx.moveTo(0, 0);
-        ctx.quadraticCurveTo(sway * 2, -60, sway * 1.5, -130);
+        const stemHeight = stage === 'flourishing' ? -130 : stage === 'medium' ? -100 : -60;
+        ctx.quadraticCurveTo(sway * 2, stemHeight / 2, sway * 1.5, stemHeight);
         ctx.stroke();
 
-        // Main branches
-        ctx.lineWidth = 5;
-        const branches = [
-          { startY: -70, angle: 0.4, length: 45 },
-          { startY: -90, angle: -0.5, length: 40 },
-          { startY: -110, angle: 0.3, length: 35 },
-          { startY: -120, angle: -0.35, length: 30 },
-        ];
-
-        branches.forEach((branch) => {
-          const startX = sway * (1 + Math.abs(branch.startY) / 100);
-          ctx.beginPath();
-          ctx.moveTo(startX, branch.startY);
-          ctx.quadraticCurveTo(
-            startX + Math.cos(branch.angle) * branch.length * 0.5,
-            branch.startY + Math.sin(branch.angle) * branch.length * 0.3 - 10,
-            startX + Math.cos(branch.angle) * branch.length,
-            branch.startY + Math.sin(branch.angle) * branch.length * 0.5
-          );
-          ctx.stroke();
-        });
-
-        // Foliage clusters (circles of leaves)
+        // Foliage/flowers based on type
         ctx.fillStyle = plantColor;
-        const foliageClusters = [
-          { x: sway * 1.5, y: -135, r: 25 },
-          { x: sway * 1.5 + 35, y: -80, r: 20 },
-          { x: sway * 1.5 - 40, y: -95, r: 22 },
-          { x: sway * 1.5 + 25, y: -115, r: 18 },
-          { x: sway * 1.5 - 30, y: -125, r: 18 },
-        ];
+        const foliageY = stemHeight;
 
-        foliageClusters.forEach((cluster) => {
-          // Draw overlapping leaves in a cluster
+        if (plantType === 'flower' && stage === 'flourishing') {
+          // Draw flower petals
+          const petalColors = ['hsl(330, 70%, 70%)', 'hsl(280, 60%, 70%)', 'hsl(45, 80%, 70%)'];
           for (let i = 0; i < 8; i++) {
             const angle = (i / 8) * Math.PI * 2 + time * 0.001;
-            const leafX = cluster.x + Math.cos(angle) * cluster.r * 0.6;
-            const leafY = cluster.y + Math.sin(angle) * cluster.r * 0.4;
-            drawLeaf(ctx, leafX, leafY, cluster.r * 0.8, cluster.r * 0.5, angle);
-          }
-        });
-
-        // Add some flowers/fruits if very healthy
-        if (health > 80) {
-          ctx.fillStyle = 'hsl(45, 80%, 55%)';
-          foliageClusters.slice(0, 3).forEach((cluster) => {
+            ctx.fillStyle = petalColors[i % 3];
             ctx.beginPath();
-            ctx.arc(cluster.x + 5, cluster.y + 5, 4, 0, Math.PI * 2);
+            ctx.ellipse(
+              sway * 1.5 + Math.cos(angle) * 20,
+              foliageY + Math.sin(angle) * 15,
+              12, 8, angle, 0, Math.PI * 2
+            );
             ctx.fill();
+          }
+          ctx.fillStyle = 'hsl(45, 80%, 55%)';
+          ctx.beginPath();
+          ctx.arc(sway * 1.5, foliageY, 10, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (plantType === 'vegetable') {
+          // Draw vegetables
+          for (let i = 0; i < 5; i++) {
+            drawLeaf(ctx, sway + (i - 2) * 15, foliageY + i * 5, 20, 12, (i - 2) * 0.2);
+          }
+          if (stage === 'flourishing') {
+            ctx.fillStyle = 'hsl(30, 80%, 55%)';
+            ctx.beginPath();
+            ctx.ellipse(sway, foliageY + 20, 8, 20, 0, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        } else {
+          // Fruit tree - draw foliage clusters
+          const clusters = [
+            { x: sway * 1.5, y: foliageY, r: 25 },
+            { x: sway * 1.5 + 30, y: foliageY + 20, r: 18 },
+            { x: sway * 1.5 - 30, y: foliageY + 15, r: 20 },
+          ];
+          clusters.forEach(c => {
+            for (let i = 0; i < 6; i++) {
+              const angle = (i / 6) * Math.PI * 2;
+              drawLeaf(ctx, c.x + Math.cos(angle) * c.r * 0.5, c.y + Math.sin(angle) * c.r * 0.3, c.r * 0.6, c.r * 0.4, angle);
+            }
           });
+          if (stage === 'flourishing' && health > 70) {
+            ctx.fillStyle = 'hsl(0, 70%, 50%)';
+            clusters.slice(0, 2).forEach(c => {
+              ctx.beginPath();
+              ctx.arc(c.x + 5, c.y + 8, 6, 0, Math.PI * 2);
+              ctx.fill();
+            });
+          }
         }
       }
 
       ctx.restore();
 
-      // Add sparkles for high health
       if (health > 70) {
         const sparkleCount = Math.floor((health - 70) / 10);
         ctx.fillStyle = 'rgba(255, 215, 0, 0.6)';
@@ -254,21 +212,14 @@ export const PlantCanvas = ({ health, totalStreak }: PlantCanvasProps) => {
       }
     };
 
-    const drawLeaf = (
-      ctx: CanvasRenderingContext2D,
-      x: number,
-      y: number,
-      width: number,
-      height: number,
-      rotation: number
-    ) => {
+    const drawLeaf = (ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, rotation: number) => {
       ctx.save();
       ctx.translate(x, y);
       ctx.rotate(rotation);
       ctx.beginPath();
       ctx.moveTo(0, 0);
-      ctx.quadraticCurveTo(width * 0.5, -height, width, 0);
-      ctx.quadraticCurveTo(width * 0.5, height * 0.5, 0, 0);
+      ctx.quadraticCurveTo(w * 0.5, -h, w, 0);
+      ctx.quadraticCurveTo(w * 0.5, h * 0.5, 0, 0);
       ctx.fill();
       ctx.restore();
     };
@@ -282,29 +233,18 @@ export const PlantCanvas = ({ health, totalStreak }: PlantCanvasProps) => {
     animationRef.current = requestAnimationFrame(animate);
 
     return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
     };
-  }, [stage, health]);
+  }, [stage, health, plantType]);
 
   return (
     <Card className="p-4 overflow-hidden">
       <div className="text-center mb-3">
-        <h3 className="font-display text-lg font-semibold text-foreground">
-          Your Garden
-        </h3>
-        <p className="text-sm text-muted-foreground">
-          {getStageLabel(stage)} • {health}% healthy
-        </p>
+        <h3 className="font-display text-lg font-semibold text-foreground">Your Garden</h3>
+        <p className="text-sm text-muted-foreground">{getStageLabel(stage, plantType)} • {health}% healthy</p>
       </div>
       <div className="relative rounded-lg overflow-hidden bg-gradient-to-b from-[hsl(200,40%,85%)] to-[hsl(45,30%,96%)]">
-        <canvas
-          ref={canvasRef}
-          width={280}
-          height={260}
-          className="w-full h-auto"
-        />
+        <canvas ref={canvasRef} width={280} height={260} className="w-full h-auto" />
       </div>
       <div className="mt-3 flex justify-center gap-2 text-xs text-muted-foreground">
         <span>🔥 {totalStreak} total streak days</span>

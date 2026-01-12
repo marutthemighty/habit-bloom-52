@@ -2,3 +2,9 @@ project_id = "mlyhfzoxtbqaizxyoedj"
 
 [functions.habit-suggestions]
 verify_jwt = false
+
+[functions.log-entry]
+verify_jwt = false
+
+[functions.get-analytics]
+verify_jwt = false
