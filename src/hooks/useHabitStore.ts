@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   HabitStore,
-  Habit,
+  LegacyHabit,
   DayRecord,
   Routine,
   STORAGE_KEY,
@@ -72,7 +72,7 @@ export const useHabitStore = () => {
         return false;
       }
 
-      const newHabit: Habit = {
+      const newHabit: LegacyHabit = {
         id: crypto.randomUUID(),
         name: name.trim(),
         category,
@@ -248,7 +248,7 @@ export const useHabitStore = () => {
   );
 
   // Get active habits (considering disruption mode)
-  const getActiveHabits = useCallback((): Habit[] => {
+  const getActiveHabits = useCallback((): LegacyHabit[] => {
     return store.habits.filter((h) => {
       if (!h.isActive) return false;
       if (store.disruptionMode && h.category === 'baseline') return false;
